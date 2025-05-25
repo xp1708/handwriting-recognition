@@ -1,0 +1,47 @@
+module conv1_layer_simple  (
+    input clk,
+    input rst_n,
+    input [7:0] data_in,
+    output [11:0] conv_out_1, conv_out_2, conv_out_3,
+    output valid_out_conv
+);
+
+    wire [7:0] data_out[0:24];
+    wire valid_out_buf;
+
+    // Buffer tạo vùng ảnh 5x5
+    conv1_buf #(.WIDTH(28), .HEIGHT(28), .DATA_BITS(8)) conv1_buf (
+        .clk(clk),
+        .rst_n(rst_n),
+        .data_in(data_in),
+        .data_out_0(data_out[0]),  .data_out_1(data_out[1]),  .data_out_2(data_out[2]),
+        .data_out_3(data_out[3]),  .data_out_4(data_out[4]),  .data_out_5(data_out[5]),
+        .data_out_6(data_out[6]),  .data_out_7(data_out[7]),  .data_out_8(data_out[8]),
+        .data_out_9(data_out[9]),  .data_out_10(data_out[10]),.data_out_11(data_out[11]),
+        .data_out_12(data_out[12]),.data_out_13(data_out[13]),.data_out_14(data_out[14]),
+        .data_out_15(data_out[15]),.data_out_16(data_out[16]),.data_out_17(data_out[17]),
+        .data_out_18(data_out[18]),.data_out_19(data_out[19]),.data_out_20(data_out[20]),
+        .data_out_21(data_out[21]),.data_out_22(data_out[22]),.data_out_23(data_out[23]),
+        .data_out_24(data_out[24]),
+        .valid_out_buf(valid_out_buf)
+    );
+
+    // Tính tích chập cho 3 bộ lọc
+    conv1_calc conv1_calc (
+        .valid_out_buf(valid_out_buf),
+        .data_out_0(data_out[0]),   .data_out_1(data_out[1]),   .data_out_2(data_out[2]),
+        .data_out_3(data_out[3]),   .data_out_4(data_out[4]),   .data_out_5(data_out[5]),
+        .data_out_6(data_out[6]),   .data_out_7(data_out[7]),   .data_out_8(data_out[8]),
+        .data_out_9(data_out[9]),   .data_out_10(data_out[10]), .data_out_11(data_out[11]),
+        .data_out_12(data_out[12]), .data_out_13(data_out[13]), .data_out_14(data_out[14]),
+        .data_out_15(data_out[15]), .data_out_16(data_out[16]), .data_out_17(data_out[17]),
+        .data_out_18(data_out[18]), .data_out_19(data_out[19]), .data_out_20(data_out[20]),
+        .data_out_21(data_out[21]), .data_out_22(data_out[22]), .data_out_23(data_out[23]),
+        .data_out_24(data_out[24]),
+        .conv_out_1(conv_out_1),
+        .conv_out_2(conv_out_2),
+        .conv_out_3(conv_out_3),
+        .valid_out_calc(valid_out_conv)
+    );
+
+endmodule

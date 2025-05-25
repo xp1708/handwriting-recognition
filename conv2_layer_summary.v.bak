@@ -1,0 +1,47 @@
+module conv2_layer_summary (
+    input clk,
+    input rst_n,
+    input valid_in,
+    input [11:0] max_value_1, max_value_2, max_value_3,
+    output [11:0] conv2_out_1, conv2_out_2, conv2_out_3,
+    output valid_out_conv2
+);
+
+    // === Internal wires and valid signals ===
+    wire [11:0] data_out_ch1 [0:24];
+    wire [11:0] data_out_ch2 [0:24];
+    wire [11:0] data_out_ch3 [0:24];
+    wire valid_buf_all;
+
+    wire signed [13:0] conv_raw_1, conv_raw_2, conv_raw_3;
+    wire valid_conv_all;
+
+    // === Bias Handling ===
+    reg signed [7:0] bias[0:2];
+    wire signed [11:0] exp_bias[0:2];
+    initial $readmemh("conv2_bias.txt", bias);
+
+    genvar i;
+    generate
+        for (i = 0; i < 3; i = i + 1) begin : bias_extend
+            assign exp_bias[i] = bias[i][7] ? {4'b1111, bias[i]} : {4'b0000, bias[i]};
+        end
+    endgenerate
+
+    // === Feature Extraction Buffers (3 channels) ===
+    conv2_buf ch_buf1 (.clk(clk), .rst_n(rst_n), .valid_in(valid_in), .data_in(max_value_1), .data_out(data_out_ch1), .valid_out_buf(valid_buf_all));
+    conv2_buf ch_buf2 (.clk(clk), .rst_n(rst_n), .valid_in(valid_in), .data_in(max_value_2), .data_out(data_out_ch2), .valid_out_buf());
+    conv2_buf ch_buf3 (.clk(clk), .rst_n(rst_n), .valid_in(valid_in), .data_in(max_value_3), .data_out(data_out_ch3), .valid_out_buf());
+
+    // === Convolution Blocks (shared logic) ===
+    conv2_calc_shared conv1 (.clk(clk), .rst_n(rst_n), .valid_out_buf(valid_buf_all), .data_in_ch0(data_out_ch1), .data_in_ch1(data_out_ch2), .data_in_ch2(data_out_ch3), .conv_out_calc(conv_raw_1), .valid_out_calc(valid_conv_all));
+    conv2_calc_shared conv2 (.clk(clk), .rst_n(rst_n), .valid_out_buf(valid_buf_all), .data_in_ch0(data_out_ch1), .data_in_ch1(data_out_ch2), .data_in_ch2(data_out_ch3), .conv_out_calc(conv_raw_2), .valid_out_calc());
+    conv2_calc_shared conv3 (.clk(clk), .rst_n(rst_n), .valid_out_buf(valid_buf_all), .data_in_ch0(data_out_ch1), .data_in_ch1(data_out_ch2), .data_in_ch2(data_out_ch3), .conv_out_calc(conv_raw_3), .valid_out_calc());
+
+    // === Output Assignment ===
+    assign conv2_out_1 = conv_raw_1[12:1] + exp_bias[0];
+    assign conv2_out_2 = conv_raw_2[12:1] + exp_bias[1];
+    assign conv2_out_3 = conv_raw_3[12:1] + exp_bias[2];
+    assign valid_out_conv2 = valid_conv_all;
+
+endmodule
